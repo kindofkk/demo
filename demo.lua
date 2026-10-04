@@ -1,117 +1,259 @@
-repeat task.wait() until game:IsLoaded()
-
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 220, 0, 170)
-Frame.Position = UDim2.new(0.5, -110, 0.5, -85)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Frame.Parent = ScreenGui
-Frame.Active = true
-Frame.Draggable = true
+-- Главное окно
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 400, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
 
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.Parent = MainFrame
+
+-- Заголовок
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Title.Text = "Baby Auto Farm"
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Title.BorderSizePixel = 0
+Title.Text = "  TbiGui Window - Beta"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
-Title.Parent = Frame
+Title.TextSize = 14
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = MainFrame
 
-local AutoBtn = Instance.new("TextButton")
-AutoBtn.Size = UDim2.new(0, 180, 0, 40)
-AutoBtn.Position = UDim2.new(0, 20, 0, 45)
-AutoBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-AutoBtn.Text = "Auto Farm: OFF"
-AutoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoBtn.Font = Enum.Font.GothamBold
-AutoBtn.TextSize = 16
-AutoBtn.Parent = Frame
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.Parent = Title
 
-local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Size = UDim2.new(1, 0, 0, 25)
-StatusLabel.Position = UDim2.new(0, 0, 0, 95)
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.Text = "Status: idle"
-StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-StatusLabel.Font = Enum.Font.Gotham
-StatusLabel.TextSize = 14
-StatusLabel.Parent = Frame
+-- Кнопки вкладок (Main, AutoFarm, Bucks transfer, Extras)
+local TabFrame = Instance.new("Frame")
+TabFrame.Size = UDim2.new(1, -20, 0, 35)
+TabFrame.Position = UDim2.new(0, 10, 0, 45)
+TabFrame.BackgroundTransparency = 1
+TabFrame.Parent = MainFrame
 
-local autoFarm = false
+local TabLayout = Instance.new("UIListLayout")
+TabLayout.FillDirection = Enum.FillDirection.Horizontal
+TabLayout.Padding = UDim.new(0, 5)
+TabLayout.Parent = TabFrame
 
--- Телепортирует персонажа к объекту с заданным именем
-local function teleportTo(objectName)
-    local char = game.Players.LocalPlayer.Character
-    if not char then return false end
+local function makeTab(text, isActive, order)
+    local Tab = Instance.new("TextButton")
+    Tab.Size = UDim2.new(0, 85, 0, 30)
+    Tab.BackgroundColor3 = isActive and Color3.fromRGB(80, 80, 80) or Color3.fromRGB(45, 45, 45)
+    Tab.BorderSizePixel = 0
+    Tab.Text = text
+    Tab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Tab.Font = Enum.Font.Gotham
+    Tab.TextSize = 13
+    Tab.LayoutOrder = order
+    Tab.Parent = TabFrame
     
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return false end
-    
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == objectName and v:IsA("BasePart") then
-            hrp.CFrame = v.CFrame + Vector3.new(0, 3, 0)
-            return true
-        end
-    end
-    return false
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 6)
+    c.Parent = Tab
+    return Tab
 end
 
--- Ищет кнопку и пытается её активировать через все доступные способы
-local function activateNeed(buttonName, parentName)
-    for _, gui in pairs(game.Players.LocalPlayer.PlayerGui:GetDescendants()) do
-        if gui:IsA("TextButton") and gui.Name == buttonName and gui.Parent.Name == parentName then
-            -- Способ 1: прямой вызов события
-            if gui.MouseButton1Click then
-                gui.MouseButton1Click:Fire()
-            end
-            -- Способ 2: стандартная активация
-            gui:Activate()
-            return true
-        end
-    end
-    return false
-end
+local TabMain = makeTab("Main", true, 1)
+local TabAuto = makeTab("AutoFarm", false, 2)
+local TabBucks = makeTab("Bucks transfer", false, 3)
+local TabExtras = makeTab("Extras", false, 4)
 
-AutoBtn.MouseButton1Click:Connect(function()
-    autoFarm = not autoFarm
-    AutoBtn.Text = autoFarm and "Auto Farm: ON" or "Auto Farm: OFF"
-    AutoBtn.BackgroundColor3 = autoFarm and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-    StatusLabel.Text = autoFarm and "Status: working..." or "Status: idle"
+-- Раздел "Info"
+local InfoLabel = Instance.new("TextLabel")
+InfoLabel.Size = UDim2.new(1, -20, 0, 20)
+InfoLabel.Position = UDim2.new(0, 10, 0, 90)
+InfoLabel.BackgroundTransparency = 1
+InfoLabel.Text = "Info"
+InfoLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+InfoLabel.Font = Enum.Font.Gotham
+InfoLabel.TextSize = 12
+InfoLabel.TextXAlignment = Enum.TextXAlignment.Left
+InfoLabel.Parent = MainFrame
+
+-- Строка 1: "You earned: 10 Bucks"
+local Line1 = Instance.new("TextButton")
+Line1.Size = UDim2.new(1, -20, 0, 35)
+Line1.Position = UDim2.new(0, 10, 0, 115)
+Line1.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+Line1.BorderSizePixel = 0
+Line1.Text = "  💰  You earned: 10 Bucks"
+Line1.TextColor3 = Color3.fromRGB(255, 255, 255)
+Line1.Font = Enum.Font.Gotham
+Line1.TextSize = 13
+Line1.TextXAlignment = Enum.TextXAlignment.Left
+Line1.Parent = MainFrame
+
+local C1 = Instance.new("UICorner")
+C1.CornerRadius = UDim.new(0, 6)
+C1.Parent = Line1
+
+-- Строка 2: "You farmed: 0 Age Potions"
+local Line2 = Instance.new("TextButton")
+Line2.Size = UDim2.new(1, -20, 0, 35)
+Line2.Position = UDim2.new(0, 10, 0, 155)
+Line2.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+Line2.BorderSizePixel = 0
+Line2.Text = "  🧪  You farmed: 0 Age Potions"
+Line2.TextColor3 = Color3.fromRGB(255, 255, 255)
+Line2.Font = Enum.Font.Gotham
+Line2.TextSize = 13
+Line2.TextXAlignment = Enum.TextXAlignment.Left
+Line2.Parent = MainFrame
+
+local C2 = Instance.new("UICorner")
+C2.CornerRadius = UDim.new(0, 6)
+C2.Parent = Line2
+
+-- Строка 3: переключатель "Disable Information"
+local Line3 = Instance.new("TextButton")
+Line3.Size = UDim2.new(1, -20, 0, 35)
+Line3.Position = UDim2.new(0, 10, 0, 195)
+Line3.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+Line3.BorderSizePixel = 0
+Line3.Text = "  Disable Information (Might reduce lags)"
+Line3.TextColor3 = Color3.fromRGB(255, 255, 255)
+Line3.Font = Enum.Font.Gotham
+Line3.TextSize = 13
+Line3.TextXAlignment = Enum.TextXAlignment.Left
+Line3.Parent = MainFrame
+
+local C3 = Instance.new("UICorner")
+C3.CornerRadius = UDim.new(0, 6)
+C3.Parent = Line3
+
+-- Сам переключатель (Toggle)
+local ToggleBG = Instance.new("Frame")
+ToggleBG.Size = UDim2.new(0, 40, 0, 20)
+ToggleBG.Position = UDim2.new(1, -50, 0.5, -10)
+ToggleBG.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+ToggleBG.BorderSizePixel = 0
+ToggleBG.Parent = Line3
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(1, 0)
+ToggleCorner.Parent = ToggleBG
+
+local ToggleKnob = Instance.new("Frame")
+ToggleKnob.Size = UDim2.new(0, 16, 0, 16)
+ToggleKnob.Position = UDim2.new(0, 2, 0.5, -8)
+ToggleKnob.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+ToggleKnob.BorderSizePixel = 0
+ToggleKnob.Parent = ToggleBG
+
+local KnobCorner = Instance.new("UICorner")
+KnobCorner.CornerRadius = UDim.new(1, 0)
+KnobCorner.Parent = ToggleKnob
+
+-- Логика переключателя
+local toggleOn = false
+Line3.MouseButton1Click:Connect(function()
+    toggleOn = not toggleOn
+    ToggleBG.BackgroundColor3 = toggleOn and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(80, 80, 80)
+    ToggleKnob.Position = toggleOn and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
 end)
 
-task.spawn(function()
-    while true do
-        task.wait(1.5)
-        if not autoFarm then continue end
-        
-        local char = game.Players.LocalPlayer.Character
-        if not char then continue end
-        
-        -- Телепорт к локациям, где можно выполнить потребности
-        -- Сначала ищем объекты для взаимодействия
-        if activateNeed("Add", "hungry") then
-            StatusLabel.Text = "Status: feeding..."
-            teleportTo("Food") -- телепорт к еде, если есть
-        elseif activateNeed("Add", "thirsty") then
-            StatusLabel.Text = "Status: drinking..."
-            teleportTo("Water")
-        elseif activateNeed("Add", "sick") then
-            StatusLabel.Text = "Status: healing..."
-            teleportTo("Bed") -- кровать обычно лечит
-        elseif activateNeed("Add", "bored") then
-            StatusLabel.Text = "Status: playing..."
-            teleportTo("Playground")
-        elseif activateNeed("Add", "toilet") then
-            StatusLabel.Text = "Status: toilet..."
-            teleportTo("Toilet")
-        elseif activateNeed("Add", "salon") then
-            StatusLabel.Text = "Status: salon..."
-            teleportTo("Salon")
-        else
-            StatusLabel.Text = "Status: all good"
-        end
-    end
-end)
+-- Раздел "Settings"
+local SettingsLabel = Instance.new("TextLabel")
+SettingsLabel.Size = UDim2.new(1, -20, 0, 20)
+SettingsLabel.Position = UDim2.new(0, 10, 0, 240)
+SettingsLabel.BackgroundTransparency = 1
+SettingsLabel.Text = "Settings"
+SettingsLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+SettingsLabel.Font = Enum.Font.Gotham
+SettingsLabel.TextSize = 12
+SettingsLabel.TextXAlignment = Enum.TextXAlignment.Left
+SettingsLabel.Parent = MainFrame
+
+-- Кнопка "Pick Color for Platform"
+local ColorBtn = Instance.new("TextButton")
+ColorBtn.Size = UDim2.new(1, -20, 0, 35)
+ColorBtn.Position = UDim2.new(0, 10, 0, 265)
+ColorBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ColorBtn.BorderSizePixel = 0
+ColorBtn.Text = "  Pick Color for Platform"
+ColorBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ColorBtn.Font = Enum.Font.Gotham
+ColorBtn.TextSize = 13
+ColorBtn.TextXAlignment = Enum.TextXAlignment.Left
+ColorBtn.Parent = MainFrame
+
+local C4 = Instance.new("UICorner")
+C4.CornerRadius = UDim.new(0, 6)
+C4.Parent = ColorBtn
+
+-- Кнопка "Destroy Platform" (заблокирована)
+local DestroyBtn = Instance.new("TextButton")
+DestroyBtn.Size = UDim2.new(1, -20, 0, 35)
+DestroyBtn.Position = UDim2.new(0, 10, 0, 305)
+DestroyBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+DestroyBtn.BorderSizePixel = 0
+DestroyBtn.Text = "  Destroy Platform"
+DestroyBtn.TextColor3 = Color3.fromRGB(120, 120, 120)
+DestroyBtn.Font = Enum.Font.Gotham
+DestroyBtn.TextSize = 13
+DestroyBtn.TextXAlignment = Enum.TextXAlignment.Left
+DestroyBtn.Parent = MainFrame
+
+local C5 = Instance.new("UICorner")
+C5.CornerRadius = UDim.new(0, 6)
+C5.Parent = DestroyBtn
+
+-- Надпись "button" справа
+local DestroyHint = Instance.new("TextLabel")
+DestroyHint.Size = UDim2.new(0, 60, 0, 35)
+DestroyHint.Position = UDim2.new(1, -70, 0, 0)
+DestroyHint.BackgroundTransparency = 1
+DestroyHint.Text = "button"
+DestroyHint.TextColor3 = Color3.fromRGB(80, 80, 80)
+DestroyHint.Font = Enum.Font.Gotham
+DestroyHint.TextSize = 12
+DestroyHint.TextXAlignment = Enum.TextXAlignment.Right
+DestroyHint.Parent = DestroyBtn
+
+-- Кнопка "Select ailments to disable them"
+local AilmentBtn = Instance.new("TextButton")
+AilmentBtn.Size = UDim2.new(1, -20, 0, 35)
+AilmentBtn.Position = UDim2.new(0, 10, 0, 345)
+AilmentBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+AilmentBtn.BorderSizePixel = 0
+AilmentBtn.Text = "  Select ailments to disable them"
+AilmentBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AilmentBtn.Font = Enum.Font.Gotham
+AilmentBtn.TextSize = 13
+AilmentBtn.TextXAlignment = Enum.TextXAlignment.Left
+AilmentBtn.Parent = MainFrame
+local C6 = Instance.new("UICorner")
+C6.CornerRadius = UDim.new(0, 6)
+C6.Parent = AilmentBtn
+
+-- Надпись "None" справа
+local AilmentHint = Instance.new("TextLabel")
+AilmentHint.Size = UDim2.new(0, 60, 0, 35)
+AilmentHint.Position = UDim2.new(1, -70, 0, 0)
+AilmentHint.BackgroundTransparency = 1
+AilmentHint.Text = "None  v"
+AilmentHint.TextColor3 = Color3.fromRGB(180, 180, 180)
+AilmentHint.Font = Enum.Font.Gotham
+AilmentHint.TextSize = 12
+AilmentHint.TextXAlignment = Enum.TextXAlignment.Right
+AilmentHint.Parent = AilmentBtn
+
+-- Раздел "Pet Selection"
+local PetLabel = Instance.new("TextLabel")
+PetLabel.Size = UDim2.new(1, -20, 0, 20)
+PetLabel.Position = UDim2.new(0, 10, 0, 390)
+PetLabel.BackgroundTransparency = 1
+PetLabel.Text = "Pet Selection"
+PetLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+PetLabel.Font = Enum.Font.Gotham
+PetLabel.TextSize = 12
+PetLabel.TextXAlignment = Enum.TextXAlignment.Left
+PetLabel.Parent = MainFrame

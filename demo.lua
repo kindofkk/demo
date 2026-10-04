@@ -1,7 +1,5 @@
--- Ждём загрузку игры
 repeat task.wait() until game:IsLoaded()
 
--- Создаём интерфейс
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
@@ -16,7 +14,7 @@ Frame.Draggable = true
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Title.Text = "Pet Auto Farm"
+Title.Text = "Baby Auto Farm"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 16
@@ -42,13 +40,11 @@ StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.TextSize = 14
 StatusLabel.Parent = Frame
 
--- Логика
 local autoFarm = false
 
--- Функция нажатия кнопки по имени
-local function pressButton(buttonName)
+local function pressButton(name, parentName)
     for _, gui in pairs(game.Players.LocalPlayer.PlayerGui:GetDescendants()) do
-        if gui:IsA("TextButton") and gui.Name == buttonName then
+        if gui:IsA("TextButton") and gui.Name == name and gui.Parent.Name == parentName then
             gui:Activate()
             return true
         end
@@ -56,7 +52,6 @@ local function pressButton(buttonName)
     return false
 end
 
--- Кнопка вкл/выкл
 AutoBtn.MouseButton1Click:Connect(function()
     autoFarm = not autoFarm
     AutoBtn.Text = autoFarm and "Auto Farm: ON" or "Auto Farm: OFF"
@@ -64,26 +59,25 @@ AutoBtn.MouseButton1Click:Connect(function()
     StatusLabel.Text = autoFarm and "Status: working..." or "Status: idle"
 end)
 
--- Основной цикл автофарма
 task.spawn(function()
     while true do
-        task.wait(2)
+        task.wait(1)
         if not autoFarm then continue end
         
-        local char = game.Players.LocalPlayer.Character
-        if not char then continue end
-        
-        -- Пытаемся нажать кнопки для питомца
-        if pressButton("Feed") then
-            StatusLabel.Text = "Status: feeding pet..."
-        elseif pressButton("Shower") then
-            StatusLabel.Text = "Status: showering pet..."
-        elseif pressButton("Sleep") then
-            StatusLabel.Text = "Status: putting pet to sleep..."
-        elseif pressButton("Play") then
-            StatusLabel.Text = "Status: playing with pet..."
+        if pressButton("Add", "hungry") then
+            StatusLabel.Text = "Status: feeding..."
+        elseif pressButton("Add", "thirsty") then
+            StatusLabel.Text = "Status: drinking..."
+        elseif pressButton("Add", "sick") then
+            StatusLabel.Text = "Status: healing..."
+        elseif pressButton("Add", "bored") then
+            StatusLabel.Text = "Status: playing..."
+        elseif pressButton("Add", "toilet") then
+            StatusLabel.Text = "Status: toilet..."
+        elseif pressButton("Add", "salon") then
+            StatusLabel.Text = "Status: salon..."
         else
-            StatusLabel.Text = "Status: buttons not found"
+            StatusLabel.Text = "Status: all good"
         end
     end
 end)

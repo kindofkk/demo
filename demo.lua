@@ -4,8 +4,8 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 220, 0, 150)
-Frame.Position = UDim2.new(0.5, -110, 0.5, -75)
+Frame.Size = UDim2.new(0, 220, 0, 170)
+Frame.Position = UDim2.new(0.5, -110, 0.5, -85)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.Parent = ScreenGui
 Frame.Active = true
@@ -22,7 +22,7 @@ Title.Parent = Frame
 
 local AutoBtn = Instance.new("TextButton")
 AutoBtn.Size = UDim2.new(0, 180, 0, 40)
-AutoBtn.Position = UDim2.new(0, 20, 0, 50)
+AutoBtn.Position = UDim2.new(0, 20, 0, 45)
 AutoBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 AutoBtn.Text = "Auto Farm: OFF"
 AutoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -32,7 +32,7 @@ AutoBtn.Parent = Frame
 
 local StatusLabel = Instance.new("TextLabel")
 StatusLabel.Size = UDim2.new(1, 0, 0, 25)
-StatusLabel.Position = UDim2.new(0, 0, 0, 100)
+StatusLabel.Position = UDim2.new(0, 0, 0, 95)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Text = "Status: idle"
 StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -42,9 +42,32 @@ StatusLabel.Parent = Frame
 
 local autoFarm = false
 
-local function pressButton(name, parentName)
+-- Телепортирует персонажа к объекту с заданным именем
+local function teleportTo(objectName)
+    local char = game.Players.LocalPlayer.Character
+    if not char then return false end
+    
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return false end
+    
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == objectName and v:IsA("BasePart") then
+            hrp.CFrame = v.CFrame + Vector3.new(0, 3, 0)
+            return true
+        end
+    end
+    return false
+end
+
+-- Ищет кнопку и пытается её активировать через все доступные способы
+local function activateNeed(buttonName, parentName)
     for _, gui in pairs(game.Players.LocalPlayer.PlayerGui:GetDescendants()) do
-        if gui:IsA("TextButton") and gui.Name == name and gui.Parent.Name == parentName then
+        if gui:IsA("TextButton") and gui.Name == buttonName and gui.Parent.Name == parentName then
+            -- Способ 1: прямой вызов события
+            if gui.MouseButton1Click then
+                gui.MouseButton1Click:Fire()
+            end
+            -- Способ 2: стандартная активация
             gui:Activate()
             return true
         end
@@ -61,21 +84,32 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(1)
+        task.wait(1.5)
         if not autoFarm then continue end
         
-        if pressButton("Add", "hungry") then
+        local char = game.Players.LocalPlayer.Character
+        if not char then continue end
+        
+        -- Телепорт к локациям, где можно выполнить потребности
+        -- Сначала ищем объекты для взаимодействия
+        if activateNeed("Add", "hungry") then
             StatusLabel.Text = "Status: feeding..."
-        elseif pressButton("Add", "thirsty") then
+            teleportTo("Food") -- телепорт к еде, если есть
+        elseif activateNeed("Add", "thirsty") then
             StatusLabel.Text = "Status: drinking..."
-        elseif pressButton("Add", "sick") then
+            teleportTo("Water")
+        elseif activateNeed("Add", "sick") then
             StatusLabel.Text = "Status: healing..."
-        elseif pressButton("Add", "bored") then
+            teleportTo("Bed") -- кровать обычно лечит
+        elseif activateNeed("Add", "bored") then
             StatusLabel.Text = "Status: playing..."
-        elseif pressButton("Add", "toilet") then
+            teleportTo("Playground")
+        elseif activateNeed("Add", "toilet") then
             StatusLabel.Text = "Status: toilet..."
-        elseif pressButton("Add", "salon") then
+            teleportTo("Toilet")
+        elseif activateNeed("Add", "salon") then
             StatusLabel.Text = "Status: salon..."
+            teleportTo("Salon")
         else
             StatusLabel.Text = "Status: all good"
         end
